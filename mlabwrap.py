@@ -293,7 +293,10 @@ class MlabObjectProxy(object):
             rep)
     def __del__(self):
         if self._parent is None:
-            mlabraw.eval(self._mlabwrap._session, 'clear %s;' % self._name)
+            try:
+                mlabraw.eval(self._mlabwrap._session, 'clear %s;' % self._name)
+            except Exception as e:
+                pass
     def _get_part(self, to_get):
         if self._mlabwrap._var_type(to_get) in self._mlabwrap._mlabraw_can_convert:
             #!!! need assignment to TMP_VAL__ because `mlabraw.get` only works
@@ -415,7 +418,10 @@ class MlabWrap(object):
            effort. To turn on autoconversion for e.g. cell arrays do:
            ``mlab._dont_proxy["cell"] = True``."""
     def __del__(self):
-        mlabraw.close(self._session)
+        try:
+            mlabraw.close(self._session)
+        except Exception as e:
+            pass
     def _format_struct(self, varname):
         res = []
         fieldnames = self._do("fieldnames(%s)" % varname)
@@ -531,7 +537,9 @@ class MlabWrap(object):
     ##                 except TypeError:
     ##                     raise TypeError("Illegal argument type (%s.:) for %d. argument" %
     ##                                     (type(arg), type(count)))
-                    mlabraw.put(self._session,  argnames[-1], arg)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('ignore')
+                        mlabraw.put(self._session,  argnames[-1], arg)
 
             if args:
                 cmd = "%s(%s)%s" % (cmd, ", ".join(argnames),
